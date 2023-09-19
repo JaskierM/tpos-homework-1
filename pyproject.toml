@@ -1,0 +1,21 @@
+[tool.poetry]
+name = "tpos"
+version = "0.1.0"
+description = ""
+license = "MIT"
+authors = ["Borodynya Maxim <borody.maxim@gmail.com>"]
+readme = "README.md"
+repository = "https://github.com/JaskierM/tpos"
+keywords = ["linux", "tmux"]
+
+
+[tool.poetry.dependencies]
+python = ">=3.10,<3.11"
+libtmux = "^0.23.2"
+click = "^8.1.7"
+tqdm = "^4.66.1"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
