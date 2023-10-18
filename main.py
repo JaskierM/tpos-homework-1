@@ -37,14 +37,13 @@ def venvs():
 
 @click.command()
 @click.argument('n', type=click.INT)
-@click.option('-r', '--root-dir', default='./', type=click.STRING)
-def start(n, root_dir='./'):
+def start(n):
     """
     @:param n: Number of environments created
     @:param root_dir: Root directory where information about sessions and windows will be stored
     """
     session = server.new_session()
-    path = Path(root_dir + 'session_' + session.session_name)
+    path = Path('session_' + session.session_name)
     path.mkdir(exist_ok=True)
     print(f'Created session "{session.session_name}"')
 
@@ -89,9 +88,13 @@ def stop(session_name):
 @click.command()
 def stop_all():
     sessions = [session.name for session in server.sessions]
+    if not sessions:
+        print("No sessions to kill")
+        return
+
     for session in sessions:
         stop_session(session)
-    print('All sessions were killed')
+    print('All session were killed')
 
 
 if __name__ == '__main__':
