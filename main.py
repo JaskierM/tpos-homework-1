@@ -15,6 +15,7 @@ HASH_SIZE = 128
 MAX_WINDOWS_TO_CREATE = 100
 
 session = None
+session_just_created = False
 
 
 def get_available_port():
@@ -42,6 +43,8 @@ def start(n):
     """
     @:param n: Number of environments created
     """
+    global session_just_created
+
     last_window = len(session.windows) - 1
 
     for i in tqdm(range(int(n))):
@@ -56,6 +59,10 @@ def start(n):
         set_env(pane, path, window.window_id, port, token)
 
         click.echo(f'Created window "{window.window_id[1:]}" port: "{port}" token: "{token}"')
+
+    if session_just_created:
+        session.kill_window('@0')
+        session_just_created = False
 
 
 def stop_window(window_name):
@@ -101,7 +108,8 @@ if __name__ == '__main__':
     server = libtmux.Server()
 
     if not server.sessions:
-        session = server.new_session()
+        session = libtmux.Server().new_session()
+        session_just_created = True
         click.echo(f'Session "{session.name}" created and connected')
     else:
         session = server.sessions[-1]
