@@ -24,19 +24,19 @@ def get_available_port():
     return sock.getsockname()[1]
 
 
-def set_env(pane, window_path, port, token):
-    pane.send_keys(f'cd {window_path}')
-    pane.send_keys('python3 -m venv venv && source venv/bin/activate')
+def set_env(pane, port, token):
+    pane.send_keys('python3 -m venv venv')
+    pane.send_keys('source venv/bin/activate')
     pane.send_keys(f'jupyter notebook --ip {IP} --port {port} --no-browser --NotebookApp.token={token} '
                    f'--NotebookApp.notebook_dir=./')
 
 
-def set_pane(window, path):
-    pane = window.split_window()
+def set_pane(window):
+    pane = window.attached_pane
 
     port = get_available_port()
     token = session.session_name + window.window_name + str(port) + str(random.getrandbits(HASH_SIZE))
-    set_env(pane, path, port, token)
+    set_env(pane, port, token)
 
     click.echo(f'Created window "{window.window_name}" port: "{port}" token: "{token}"')
 
@@ -75,7 +75,7 @@ def start(n):
         path = Path(f'dir0')
         path.mkdir(exist_ok=True)
         window = session.windows[-1]
-        set_pane(window, path)
+        set_pane(window)
 
         session_just_created = False
         n -= 1
@@ -87,8 +87,8 @@ def start(n):
 
         path = Path(f'dir{window_name}')
         path.mkdir(exist_ok=True)
-        window = session.new_window(attach=False, window_name=window_name)
-        set_pane(window, path)
+        window = session.new_window(window_name=window_name, start_directory=path.name)
+        set_pane(window)
 
 
 @venvs.command('stop')
@@ -117,7 +117,7 @@ if __name__ == '__main__':
     server = libtmux.Server()
 
     if not server.sessions:
-        session = libtmux.Server().new_session(window_name='0')
+        session = libtmux.Server().new_session(window_name='0', start_directory='dir0')
         session_just_created = True
         click.echo(f'Session "{session.name}" created and connected')
     else:

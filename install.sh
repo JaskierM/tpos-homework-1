@@ -6,10 +6,11 @@ echo "Installing tmux"
 apt-get update
 apt-get -y updrade
 apt-get install -y tmux
-apt-get install python3-venv -y
 
-echo "Installing the dependencies in current Python environment"
+echo "Installing the dependencies in new Python environment"
 
+python3 -m venv venv
+source venv/bin/activate
 pip3 install libtmux
 pip3 install click
 pip3 install tqdm
