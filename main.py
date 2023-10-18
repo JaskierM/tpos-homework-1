@@ -13,6 +13,8 @@ from pathlib import Path
 IP = 'localhost'
 HASH_SIZE = 128
 
+server = None
+
 
 def get_available_port():
     sock = socket.socket()
@@ -41,8 +43,6 @@ def start(n, root_dir='./'):
     @:param n: Number of environments created
     @:param root_dir: Root directory where information about sessions and windows will be stored
     """
-    server = libtmux.Server()
-
     session = server.new_session()
     path = Path(root_dir + 'session_' + session.session_name)
     path.mkdir(exist_ok=True)
@@ -60,42 +60,14 @@ def start(n, root_dir='./'):
         print(f'Created window "{window.window_id[1:]}" port: "{port}" token: "{token}"')
 
 
-@click.command()
-@click.argument('session_name', type=click.STRING)
-@click.argument('window_name', type=click.STRING)
-def stop(session_name, window_name):
-    """
-    @:param session_name: Name of the tmux session in which the environments are running
-    @:param window_name: environment number to kill
-    """
-    server = libtmux.Server()
-
-    try:
-        session = server.sessions.get(session_name=session_name)
-        window = session.windows.get(window_id=f'@{window_name}')
-        try:
-            path = Path(f'session_{session_name}/window_{window_name}')
-            shutil.rmtree(path)
-        except FileNotFoundError:
-            pass
-
-        window.kill_window()
-        print(f'Window "{window_name}" in session "{session_name}" was killed')
-    except (LibTmuxException, ObjectDoesNotExist):
-        print(f'Can\'t find session/window')
-
-
-@click.command()
-@click.argument('session_name', type=click.STRING)
-def stop_all(session_name):
+def stop_session(session_name):
     """
     @:param session_name: Name of the tmux session in which the environments are running
     """
-    server = libtmux.Server()
     try:
         try:
             path = Path(f'session_{session_name}')
-            shutil.rmtree(path)
+            shutil.rmtree(path, ignore_errors=True)
         except FileNotFoundError:
             pass
 
@@ -105,7 +77,25 @@ def stop_all(session_name):
         print(f'Can\'t find session')
 
 
+@click.command()
+@click.argument('session_name', type=click.STRING)
+def stop(session_name):
+    """
+    @:param session_name: Name of the tmux session in which the environments are running
+    """
+    stop_session(session_name)
+
+
+@click.command()
+def stop_all():
+    sessions = [session.name for session in server.sessions]
+    for session in sessions:
+        stop_session(session)
+    print('All sessions were killed')
+
+
 if __name__ == '__main__':
+    server = libtmux.Server()
     venvs.add_command(start)
     venvs.add_command(stop)
     venvs.add_command(stop_all)
