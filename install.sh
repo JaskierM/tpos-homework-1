@@ -16,5 +16,3 @@ pip3 install click
 pip3 install tqdm
 
 echo "Done"
-
-exit 0
