@@ -6,6 +6,7 @@ echo "Installing tmux"
 apt-get update
 apt-get -y updrade
 apt-get install -y tmux
+apt-get install python3-venv -y
 
 echo "Installing the dependencies in current Python environment"
 
