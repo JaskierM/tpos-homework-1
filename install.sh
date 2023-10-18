@@ -12,8 +12,8 @@ echo "Installing the dependencies in new Python environment"
 python3 -m venv .venv && source .venv/bin/activate
 python3 -m pip install --upgrade pip
 python3 -m pip install libtmux
-python3 -m install click
-python3 -m install tqdm
+python3 -m pip install click
+python3 -m pip install tqdm
 
 echo "Done"
 
