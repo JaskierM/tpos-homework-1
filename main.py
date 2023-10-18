@@ -1,6 +1,5 @@
 import socket
 import click
-import click.testing
 import libtmux
 import random
 import shutil
@@ -13,9 +12,9 @@ from pathlib import Path
 
 IP = 'localhost'
 HASH_SIZE = 128
+MAX_WINDOWS_TO_CREATE = 100
 
-runner = None
-server = None
+session = None
 
 
 def get_available_port():
@@ -25,7 +24,7 @@ def get_available_port():
 
 
 def set_env(pane, session_path, window_id, port, token):
-    pane.send_keys(f'cd {session_path} && mkdir window_{window_id[1:]} && cd window_{window_id[1:]}')
+    pane.send_keys(f'cd {session_path}')
     pane.send_keys('mkdir .venv && python3 -m venv .venv')
     pane.send_keys('source .venv/bin/activate')
     pane.send_keys(f'jupyter notebook --ip {IP} --port {port} --no-browser --NotebookApp.token={token} '
@@ -38,67 +37,74 @@ def venvs():
 
 
 @venvs.command('start')
-@click.argument('n', type=click.INT)
+@click.argument('n', type=click.IntRange(1, MAX_WINDOWS_TO_CREATE))
 def start(n):
     """
     @:param n: Number of environments created
-    @:param root_dir: Root directory where information about sessions and windows will be stored
     """
-    session = server.new_session()
-    path = Path('session_' + session.session_name)
-    path.mkdir(exist_ok=True)
-    print(f'Created session "{session.session_name}"')
+    last_window = len(session.windows) - 1
 
-    for _ in tqdm(range(int(n))):
+    for i in tqdm(range(int(n))):
+        path = Path(f'dir{last_window + i}')
+        path.mkdir(exist_ok=True)
+
         window = session.new_window(attach=False)
         pane = window.split_window(attach=False)
 
         port = get_available_port()
         token = session.session_name + window.window_id[1:] + str(port) + str(random.getrandbits(HASH_SIZE))
-
         set_env(pane, path, window.window_id, port, token)
 
-        print(f'Created window "{window.window_id[1:]}" port: "{port}" token: "{token}"')
+        click.echo(f'Created window "{window.window_id[1:]}" port: "{port}" token: "{token}"')
 
 
-def stop_session(session_name):
+def stop_window(window_name):
     """
     @:param session_name: Name of the tmux session in which the environments are running
     """
     try:
         try:
-            path = Path(f'session_{session_name}')
+            path = Path(f'dir{window_name}')
             shutil.rmtree(path, ignore_errors=True)
         except FileNotFoundError:
             pass
 
-        server.kill_session(session_name)
-        print(f'Session "{session_name}" was killed')
+        session.kill_window(str(int(window_name) + 1))
+        click.echo(f'Window "{window_name}" was killed')
     except (LibTmuxException, ObjectDoesNotExist):
-        print(f'Can\'t find session')
+        click.echo(f'Can\'t find window')
 
 
 @venvs.command('stop')
-@click.argument('session_name', type=click.STRING)
-def stop(session_name):
+@click.argument('window_name', type=click.STRING)
+def stop(window_name):
     """
-    @:param session_name: Name of the tmux session in which the environments are running
+    @:param window_name: Name of the tmux window in which the environments are running
     """
-    stop_session(session_name)
+    stop_window(window_name)
 
 
 @venvs.command('stop_all')
 def stop_all():
-    sessions = [session.name for session in server.sessions]
-    if not sessions:
-        print("No sessions to kill")
+    windows = [str(int(window.window_id[1:]) - 1) for window in session.windows]
+
+    if not windows:
+        click.echo("No windows to kill")
         return
 
-    for session in sessions:
-        stop_session(session)
-    print('All session were killed')
+    for window in windows:
+        stop_window(window)
+    click.echo('All windows were killed')
 
 
 if __name__ == '__main__':
     server = libtmux.Server()
+
+    if not server.sessions:
+        session = server.new_session()
+        click.echo(f'Session "{session.name}" created and connected')
+    else:
+        session = server.sessions[-1]
+        click.echo(f'Current session is "{session.name}"')
+
     venvs()
