@@ -26,8 +26,7 @@ def get_available_port():
 
 def set_env(pane, window_path, port, token):
     pane.send_keys(f'cd {window_path}')
-    pane.send_keys('python3 -m venv venv')
-    pane.send_keys('source /venv/bin/activate')
+    pane.send_keys('python3 -m venv venv && source venv/bin/activate')
     pane.send_keys(f'jupyter notebook --ip {IP} --port {port} --no-browser --NotebookApp.token={token} '
                    f'--NotebookApp.notebook_dir=./')
 
