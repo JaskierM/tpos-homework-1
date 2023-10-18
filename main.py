@@ -1,5 +1,6 @@
 import socket
 import click
+import click.testing
 import libtmux
 import random
 import shutil
@@ -13,6 +14,7 @@ from pathlib import Path
 IP = 'localhost'
 HASH_SIZE = 128
 
+runner = None
 server = None
 
 
@@ -35,7 +37,7 @@ def venvs():
     pass
 
 
-@click.command()
+@venvs.command('start')
 @click.argument('n', type=click.INT)
 def start(n):
     """
@@ -76,7 +78,7 @@ def stop_session(session_name):
         print(f'Can\'t find session')
 
 
-@click.command()
+@venvs.command('stop')
 @click.argument('session_name', type=click.STRING)
 def stop(session_name):
     """
@@ -85,7 +87,7 @@ def stop(session_name):
     stop_session(session_name)
 
 
-@click.command()
+@venvs.command('stop_all')
 def stop_all():
     sessions = [session.name for session in server.sessions]
     if not sessions:
@@ -99,7 +101,4 @@ def stop_all():
 
 if __name__ == '__main__':
     server = libtmux.Server()
-    venvs.add_command(start)
-    venvs.add_command(stop)
-    venvs.add_command(stop_all)
     venvs()
