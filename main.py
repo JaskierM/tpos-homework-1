@@ -72,8 +72,6 @@ def start(n):
     global session_just_created
 
     if session_just_created:
-        path = Path(f'dir0')
-        path.mkdir(exist_ok=True)
         window = session.windows[-1]
         set_pane(window)
 
@@ -117,7 +115,9 @@ if __name__ == '__main__':
     server = libtmux.Server()
 
     if not server.sessions:
-        session = libtmux.Server().new_session(window_name='0', start_directory='dir0')
+        first_path = Path(f'dir0')
+        first_path.mkdir(exist_ok=True)
+        session = libtmux.Server().new_session(window_name='0', start_directory=first_path.name)
         session_just_created = True
         click.echo(f'Session "{session.name}" created and connected')
     else:
