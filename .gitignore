@@ -284,4 +284,6 @@ pyrightconfig.json
 pyvenv.cfg
 pip-selfcheck.json
 
+session_*
+
 # End of https://www.toptal.com/developers/gitignore/api/python,pycharm+all,jupyternotebooks,venv
